@@ -18,6 +18,8 @@ vim.opt.number = true
 --  Experiment for yourself to see if you like it!
 vim.opt.relativenumber = true
 
+vim.opt.tabstop = 4
+
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = ''
 
@@ -203,6 +205,7 @@ require('lazy').setup({
         ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
         ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
         ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
+        ['<leader>T'] = { name = '[Test]', _ = 'which_key_ignore' },
       }
       -- visual mode
       require('which-key').register({
@@ -566,6 +569,7 @@ require('lazy').setup({
         }
       end,
       formatters_by_ft = {
+        go = { 'goimports', 'gofmt' },
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
@@ -814,6 +818,46 @@ require('lazy').setup({
       { '<c-k>', '<cmd><C-U>TmuxNavigateUp<cr>' },
       { '<c-l>', '<cmd><C-U>TmuxNavigateRight<cr>' },
       { '<c-\\>', '<cmd><C-U>TmuxNavigatePrevious<cr>' },
+    },
+    {
+      'nvim-neotest/neotest',
+      dependencies = {
+        'nvim-neotest/nvim-nio',
+        'nvim-neotest/neotest-go',
+        'nvim-lua/plenary.nvim',
+        'nvim-treesitter/nvim-treesitter',
+      },
+      config = function()
+        local neotest = require 'neotest'
+        -- get neotest namespace (api call creates or returns namespace)
+        local neotest_ns = vim.api.nvim_create_namespace 'neotest'
+        vim.diagnostic.config({
+          virtual_text = {
+            format = function(diagnostic)
+              local message = diagnostic.message:gsub('\n', ' '):gsub('\t', ' '):gsub('%s+', ' '):gsub('^%s+', '')
+              return message
+            end,
+          },
+        }, neotest_ns)
+
+        vim.keymap.set('n', '<leader>Tf', function()
+          neotest.run.run()
+        end, { desc = 'Run current test [f]unction' })
+
+        vim.keymap.set('n', '<leader>TT', function()
+          neotest.run.run(vim.fn.expand '%')
+        end, { desc = 'Run all [T]ests in file' })
+
+        vim.keymap.set('n', '<leader>Tp', function()
+          neotest.output_panel.toggle()
+        end, { desc = 'Toggle test [p]anel' })
+
+        neotest.setup {
+          adapters = {
+            require 'neotest-go',
+          },
+        }
+      end,
     },
   },
 
